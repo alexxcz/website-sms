@@ -1,0 +1,727 @@
+
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Privátní Chat</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: #fff;
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Login stránka */
+        .login-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .login-box {
+            background: white;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .login-box h1 {
+            margin-bottom: 30px;
+            color: #333;
+            text-align: center;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: 500;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+            transition: border-color 0.2s;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 5px rgba(102, 126, 234, 0.2);
+        }
+
+        .btn {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+
+        .btn:hover {
+            opacity: 0.9;
+        }
+
+        .error-message {
+            color: #e74c3c;
+            font-size: 14px;
+            margin-bottom: 20px;
+            padding: 10px;
+            background: #fadbd8;
+            border-radius: 5px;
+            display: none;
+        }
+
+        .success-message {
+            color: #27ae60;
+            font-size: 14px;
+            margin-bottom: 20px;
+            padding: 10px;
+            background: #d5f4e6;
+            border-radius: 5px;
+            display: none;
+        }
+
+        .toggle-auth {
+            text-align: center;
+            margin-top: 15px;
+            font-size: 14px;
+            color: #666;
+        }
+
+        .toggle-auth a {
+            color: #667eea;
+            cursor: pointer;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        /* Chat interface */
+        .chat-interface {
+            display: none;
+            width: 100%;
+            height: 100%;
+            flex-direction: column;
+        }
+
+        .chat-interface.active {
+            display: flex;
+        }
+
+        .top-bar {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .user-info {
+            font-weight: 600;
+        }
+
+        .logout-btn {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 1px solid white;
+            padding: 8px 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.2s;
+        }
+
+        .logout-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .chat-main {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .sidebar {
+            width: 350px;
+            border-right: 1px solid #e5e5e5;
+            display: flex;
+            flex-direction: column;
+            background: #f9f9f9;
+        }
+
+        .sidebar-section {
+            padding: 15px;
+            border-bottom: 1px solid #e5e5e5;
+        }
+
+        .sidebar-section h3 {
+            font-size: 14px;
+            margin-bottom: 10px;
+            color: #666;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .add-contact {
+            display: flex;
+            gap: 8px;
+        }
+
+        .add-contact input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+
+        .add-contact button {
+            padding: 10px 15px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .add-contact button:hover {
+            background: #5568d3;
+        }
+
+        .contacts-list {
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .contact {
+            padding: 12px 15px;
+            border-bottom: 1px solid #e5e5e5;
+            cursor: pointer;
+            transition: background 0.2s;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .contact:hover {
+            background: #f0f0f0;
+        }
+
+        .contact.active {
+            background: #e7f3ff;
+            border-left: 3px solid #667eea;
+        }
+
+        .contact-name {
+            font-weight: 500;
+            color: #333;
+        }
+
+        .contact-remove {
+            background: #e74c3c;
+            color: white;
+            border: none;
+            padding: 4px 8px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .contact-remove:hover {
+            background: #c0392b;
+        }
+
+        .chat-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: white;
+        }
+
+        .chat-header {
+            padding: 15px 20px;
+            border-bottom: 1px solid #e5e5e5;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .chat-header.empty {
+            text-align: center;
+            color: #999;
+            display: none;
+        }
+
+        .messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .message {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        .message.sent {
+            justify-content: flex-end;
+        }
+
+        .message.received {
+            justify-content: flex-start;
+        }
+
+        .message-text {
+            max-width: 60%;
+            padding: 12px 15px;
+            border-radius: 12px;
+            font-size: 14px;
+            line-height: 1.4;
+        }
+
+        .message.sent .message-text {
+            background: #667eea;
+            color: white;
+            border-bottom-right-radius: 4px;
+        }
+
+        .message.received .message-text {
+            background: #e5e5e5;
+            color: #333;
+            border-bottom-left-radius: 4px;
+        }
+
+        .message-time {
+            font-size: 12px;
+            color: #999;
+            margin-top: 4px;
+            text-align: center;
+        }
+
+        .input-area {
+            padding: 15px 20px;
+            border-top: 1px solid #e5e5e5;
+            display: flex;
+            gap: 10px;
+        }
+
+        .input-area input {
+            flex: 1;
+            padding: 10px 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+
+        .input-area button {
+            padding: 10px 20px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .input-area button:hover {
+            background: #5568d3;
+        }
+
+        .empty-chat {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex: 1;
+            color: #999;
+            font-size: 16px;
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 280px;
+            }
+
+            .message-text {
+                max-width: 80%;
+            }
+        }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #ccc;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #999;
+        }
+    </style>
+</head>
+<body>
+    <!-- Login -->
+    <div id="loginContainer" class="login-container">
+        <div class="login-box">
+            <h1 id="authTitle">Přihlášení</h1>
+            <div class="error-message" id="errorMsg"></div>
+            <div class="success-message" id="successMsg"></div>
+            
+            <div id="loginForm">
+                <div class="form-group">
+                    <label>Uživatelské jméno:</label>
+                    <input type="text" id="loginUsername" placeholder="Zadej uživatelské jméno">
+                </div>
+                <div class="form-group">
+                    <label>4místné heslo:</label>
+                    <input type="password" id="loginPassword" placeholder="1234" maxlength="4">
+                </div>
+                <button class="btn" onclick="login()">Přihlásit se</button>
+                
+                <div class="toggle-auth">
+                    Ještě nemáš účet? <a onclick="toggleAuth()">Zaregistruj se</a>
+                </div>
+            </div>
+
+            <div id="registerForm" style="display: none;">
+                <div class="form-group">
+                    <label>Uživatelské jméno:</label>
+                    <input type="text" id="registerUsername" placeholder="Vymysli si jméno">
+                </div>
+                <div class="form-group">
+                    <label>4místné heslo:</label>
+                    <input type="password" id="registerPassword" placeholder="1234" maxlength="4">
+                </div>
+                <button class="btn" onclick="register()">Zaregistrovat se</button>
+                
+                <div class="toggle-auth">
+                    Máš již účet? <a onclick="toggleAuth()">Přihláš se</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chat Interface -->
+    <div id="chatContainer" class="chat-interface">
+        <div class="top-bar">
+            <div class="user-info">Přihlášen(a) jako: <span id="currentUser"></span></div>
+            <button class="logout-btn" onclick="logout()">Odhlásit se</button>
+        </div>
+
+        <div class="chat-main">
+            <!-- Sidebar -->
+            <div class="sidebar">
+                <div class="sidebar-section">
+                    <h3>Přidat kontakt</h3>
+                    <div class="add-contact">
+                        <input type="text" id="contactUsername" placeholder="Uživatelské jméno">
+                        <button onclick="addContact()">+</button>
+                    </div>
+                </div>
+
+                <div class="sidebar-section">
+                    <h3>Moje kontakty</h3>
+                </div>
+
+                <div class="contacts-list" id="contactsList">
+                    <!-- Kontakty se načítají JavaScriptem -->
+                </div>
+            </div>
+
+            <!-- Chat area -->
+            <div class="chat-area">
+                <div class="chat-header empty" id="chatHeaderEmpty">Vyber kontakt nebo přidej nový</div>
+                <div class="chat-header" id="chatHeader" style="display: none;">Rozhovor s: <span id="chatWith"></span></div>
+                
+                <div id="emptyChatState" class="empty-chat">
+                    Vyber kontakt z levé strany
+                </div>
+
+                <div id="messagesArea" style="display: none; flex: 1; display: flex; flex-direction: column;">
+                    <div class="messages" id="messagesList"></div>
+                    
+                    <div class="input-area">
+                        <input type="text" id="messageInput" placeholder="Napiš zprávu..." onkeypress="handleKeyPress(event)">
+                        <button onclick="sendMessage()">Poslat</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentUser = null;
+        let currentContact = null;
+
+        async function login() {
+            const username = document.getElementById('loginUsername').value;
+            const password = document.getElementById('loginPassword').value;
+
+            if (!username || !password) {
+                showError('Vyplň uživatelské jméno a heslo!');
+                return;
+            }
+
+            if (password.length !== 4 || isNaN(password)) {
+                showError('Heslo musí být přesně 4 číslice!');
+                return;
+            }
+
+            const response = await fetch('/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, password })
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                currentUser = username;
+                showChat();
+            } else {
+                showError(data.message);
+            }
+        }
+
+        async function register() {
+            const username = document.getElementById('registerUsername').value;
+            const password = document.getElementById('registerPassword').value;
+
+            if (!username || !password) {
+                showError('Vyplň uživatelské jméno a heslo!');
+                return;
+            }
+
+            if (password.length !== 4 || isNaN(password)) {
+                showError('Heslo musí být přesně 4 číslice!');
+                return;
+            }
+
+            const response = await fetch('/register', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, password })
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                showSuccess('Účet byl vytvořen! Teď se přihláš.');
+                toggleAuth();
+            } else {
+                showError(data.message);
+            }
+        }
+
+        async function addContact() {
+            const contactUsername = document.getElementById('contactUsername').value;
+
+            if (!contactUsername) {
+                showError('Zadej uživatelské jméno kontaktu!');
+                return;
+            }
+
+            const response = await fetch('/add_contact', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ contact: contactUsername })
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                document.getElementById('contactUsername').value = '';
+                loadContacts();
+            } else {
+                showError(data.message);
+            }
+        }
+
+        async function loadContacts() {
+            const response = await fetch('/get_contacts');
+            const data = await response.json();
+
+            const list = document.getElementById('contactsList');
+            list.innerHTML = data.contacts.map(contact => `
+                <div class="contact" onclick="selectContact('${contact}')" id="contact-${contact}">
+                    <div class="contact-name">${contact}</div>
+                    <button class="contact-remove" onclick="removeContact('${contact}', event)">Odebrat</button>
+                </div>
+            `).join('');
+        }
+
+        async function selectContact(contact) {
+            currentContact = contact;
+
+            // Update UI
+            document.querySelectorAll('.contact').forEach(el => el.classList.remove('active'));
+            document.getElementById(`contact-${contact}`).classList.add('active');
+
+            document.getElementById('emptyChatState').style.display = 'none';
+            document.getElementById('messagesArea').style.display = 'flex';
+            document.getElementById('chatHeader').style.display = 'block';
+            document.getElementById('chatWith').textContent = contact;
+
+            loadMessages();
+        }
+
+        async function loadMessages() {
+            const response = await fetch(`/get_messages?contact=${currentContact}`);
+            const data = await response.json();
+
+            const list = document.getElementById('messagesList');
+            list.innerHTML = data.messages.map(msg => `
+                <div class="message ${msg.sender === currentUser ? 'sent' : 'received'}">
+                    <div>
+                        <div class="message-text">${msg.text}</div>
+                        <div class="message-time">${msg.time}</div>
+                    </div>
+                </div>
+            `).join('');
+
+            list.scrollTop = list.scrollHeight;
+        }
+
+        async function sendMessage() {
+            const input = document.getElementById('messageInput');
+            const text = input.value.trim();
+
+            if (!text || !currentContact) return;
+
+            const response = await fetch('/send_message', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ recipient: currentContact, text: text })
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                input.value = '';
+                loadMessages();
+            } else {
+                showError(data.message);
+            }
+        }
+
+        async function removeContact(contact, event) {
+            event.stopPropagation();
+
+            const response = await fetch('/remove_contact', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ contact: contact })
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                loadContacts();
+            }
+        }
+
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') {
+                sendMessage();
+            }
+        }
+
+        function showChat() {
+            document.getElementById('loginContainer').style.display = 'none';
+            document.getElementById('chatContainer').classList.add('active');
+            document.getElementById('currentUser').textContent = currentUser;
+            loadContacts();
+
+            // Načítání zpráv každou sekundu
+            setInterval(() => {
+                if (currentContact) {
+                    loadMessages();
+                }
+            }, 2000);
+        }
+
+        function logout() {
+            fetch('/logout', { method: 'POST' });
+            currentUser = null;
+            currentContact = null;
+            document.getElementById('loginContainer').style.display = 'flex';
+            document.getElementById('chatContainer').classList.remove('active');
+            clearForms();
+        }
+
+        function toggleAuth() {
+            const loginForm = document.getElementById('loginForm');
+            const registerForm = document.getElementById('registerForm');
+            const title = document.getElementById('authTitle');
+
+            if (loginForm.style.display !== 'none') {
+                loginForm.style.display = 'none';
+                registerForm.style.display = 'block';
+                title.textContent = 'Registrace';
+            } else {
+                loginForm.style.display = 'block';
+                registerForm.style.display = 'none';
+                title.textContent = 'Přihlášení';
+            }
+            clearForms();
+        }
+
+        function clearForms() {
+            document.getElementById('loginUsername').value = '';
+            document.getElementById('loginPassword').value = '';
+            document.getElementById('registerUsername').value = '';
+            document.getElementById('registerPassword').value = '';
+            document.getElementById('errorMsg').style.display = 'none';
+            document.getElementById('successMsg').style.display = 'none';
+        }
+
+        function showError(message) {
+            const err = document.getElementById('errorMsg');
+            err.textContent = message;
+            err.style.display = 'block';
+        }
+
+        function showSuccess(message) {
+            const succ = document.getElementById('successMsg');
+            succ.textContent = message;
+            succ.style.display = 'block';
+        }
+    </script>
+</body>
+</html>
